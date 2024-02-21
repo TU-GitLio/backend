@@ -9,6 +9,7 @@ class PortfolioCreate(PortfolioBase):
     pass
 
 class Portfolio(PortfolioBase):
+
     id: int
     owner_id: int
 
@@ -24,6 +25,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     is_active: bool
     portfolio: list[Portfolio] = []
+
 
     class Config:
         orm_mode = True

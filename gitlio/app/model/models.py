@@ -12,7 +12,6 @@ from ..database import Base
 class Base(DeclarativeBase):
     pass
 
-
 class User(Base):
     __tablename__ = "users"
 
@@ -31,3 +30,4 @@ class Portfolio(Base):
     owner_id: Mapped[String] = mapped_column(ForeignKey("users.id"))
 
     user: Mapped["User"] = relationship(back_populates="portfolios")
+
