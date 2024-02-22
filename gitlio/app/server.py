@@ -1,17 +1,17 @@
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from langchain.chat_models import ChatAnthropic, ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langserve import add_routes
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
-from .model import models
+from .model.models import Base
 
 from . import crud, schemas
 from .database import SessionLocal, engine
 
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="LangChain Server",
