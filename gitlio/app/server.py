@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from .model.models import Base
+from .config.mongo import client
 
 from . import crud, schemas
 from .database import SessionLocal, engine
@@ -18,7 +19,6 @@ app = FastAPI(
     version="1.0",
     description="Spin up a simple api server using Langchain's Runnable interfaces",
 )
-
 
 # Dependency
 def get_db():
