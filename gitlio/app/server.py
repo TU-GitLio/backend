@@ -48,7 +48,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+    return user_repository.create_user(db=db, user=user)
 
 
 @app.get("/users/", response_model=list[schemas.User])
