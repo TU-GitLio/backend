@@ -7,13 +7,13 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
-from ..database import Base
+from sqlalchemy.ext.declarative import declarative_base
 
 class Base(DeclarativeBase):
     pass
 
-class User(Base):
-    __tablename__ = "users"
+class Member(Base):
+    __tablename__ = "members"
 
     id: Mapped[str] = mapped_column(primary_key=True)
     email = Column(String, unique=True, index=True)
@@ -25,9 +25,7 @@ class Portfolio(Base):
 
     id = Column(Integer, primary_key=True)
     mongo_id = Column(String, index=True)
-    title = Column(String)
-    description = Column(String)
-    owner_id: Mapped[String] = mapped_column(ForeignKey("users.id"))
-
-    user: Mapped["User"] = relationship(back_populates="portfolios")
-
+    title = Column(String, index=True)
+    description = Column(String, index=True)
+    owner_id = Column(Integer, ForeignKey("members.id"))
+    owner = relationship("Member", back_populates="portfolios")
