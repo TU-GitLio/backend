@@ -27,5 +27,5 @@ class Portfolio(Base):
     mongo_id = Column(String, index=True)
     title = Column(String, index=True)
     description = Column(String, index=True)
-    owner_id = Column(Integer, ForeignKey("members.id"))
+    owner_id = Column(String, ForeignKey("members.id"))
     owner = relationship("Member", back_populates="portfolios")

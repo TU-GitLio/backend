@@ -17,15 +17,18 @@ class Portfolio(PortfolioBase):
         orm_mode = True
 
 class UserBase(BaseModel):
+    id: str
     email: str
 
 class UserCreate(UserBase):
-    id: str
+    pass
 
-class User(UserBase):
+class User(BaseModel):
     is_active: bool
     portfolio: list[Portfolio] = []
 
-
     class Config:
         orm_mode = True
+
+class UserRepository(UserBase):
+    repositoryUrl: str

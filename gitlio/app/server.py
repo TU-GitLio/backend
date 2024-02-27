@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import ChatAnthropic, ChatOpenAI
 from langserve import add_routes
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
