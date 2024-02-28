@@ -1,27 +1,31 @@
+from __future__ import annotations
+from typing import List
+
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
 
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
-class Member(Base):
-    __tablename__ = "members"
+class User(Base):
+    __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[str] = mapped_column(primary_key=True)
     email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    portfolio: Mapped[List["Portfolio"]] = relationship(back_populates="user")
 
-    items = relationship("Item", back_populates="owner")
-
-
-class Item(Base):
-    __tablename__ = "items"
+class Portfolio(Base):
+    __tablename__ = "portfolios"
 
     id = Column(Integer, primary_key=True)
+    mongo_id = Column(String, index=True)
     title = Column(String, index=True)
     description = Column(String, index=True)
-    owner_id = Column(Integer, ForeignKey("members.id"))
-
-    owner = relationship("Member", back_populates="items")
+    owner_id = Column(String, ForeignKey("users.id"))
+    owner = relationship("User", back_populates="portfolios")

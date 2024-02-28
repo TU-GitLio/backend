@@ -1,35 +1,34 @@
 from pydantic import BaseModel
 
-
-class ItemBase(BaseModel):
+class PortfolioBase(BaseModel):
     title: str
     description: str | None = None
 
-
-class ItemCreate(ItemBase):
+class PortfolioCreate(PortfolioBase):
+    mongo_id: str
     pass
 
+class Portfolio(PortfolioBase):
 
-class Item(ItemBase):
     id: int
     owner_id: int
 
     class Config:
         orm_mode = True
 
-
 class UserBase(BaseModel):
+    id: str
     email: str
 
-
 class UserCreate(UserBase):
-    password: str
+    pass
 
-
-class User(UserBase):
-    id: int
+class User(BaseModel):
     is_active: bool
-    items: list[Item] = []
+    portfolio: list[Portfolio] = []
 
     class Config:
         orm_mode = True
+
+class UserRepository(UserBase):
+    repositoryUrl: str
