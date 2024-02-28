@@ -7,7 +7,6 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
-from sqlalchemy.ext.declarative import declarative_base
 
 class Base(DeclarativeBase):
     pass
