@@ -12,8 +12,8 @@ from sqlalchemy.ext.declarative import declarative_base
 class Base(DeclarativeBase):
     pass
 
-class Member(Base):
-    __tablename__ = "members"
+class User(Base):
+    __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(primary_key=True)
     email = Column(String, unique=True, index=True)
@@ -27,5 +27,5 @@ class Portfolio(Base):
     mongo_id = Column(String, index=True)
     title = Column(String, index=True)
     description = Column(String, index=True)
-    owner_id = Column(String, ForeignKey("members.id"))
-    owner = relationship("Member", back_populates="portfolios")
+    owner_id = Column(String, ForeignKey("users.id"))
+    owner = relationship("User", back_populates="portfolios")
