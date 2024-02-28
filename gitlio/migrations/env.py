@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-global_env = dotenv_values(BASE_DIR / "gitlio" / ".env")
+global_env = dotenv_values(BASE_DIR / ".env")
 
 url_str = "postgresql://{POSTGRES_ID}:{POSTGRES_PASSWORD}@gitlio.czdnm9iu9p2c.us-east-1.rds.amazonaws.com:5432".format(
     POSTGRES_ID=global_env["POSTGRES_ID"],
