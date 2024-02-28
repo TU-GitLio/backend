@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from langchain.chat_models import ChatAnthropic, ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langserve import add_routes
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -11,7 +11,6 @@ from .model.models import Base
 from .config.mongo import client
 
 from . import schemas
-
 from .database import SessionLocal, engine
 
 Base.metadata.create_all(bind=engine)
