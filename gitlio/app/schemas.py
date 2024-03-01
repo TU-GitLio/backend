@@ -17,7 +17,7 @@ class Portfolio(PortfolioBase):
         orm_mode = True
 
 class UserBase(BaseModel):
-    id: str
+    clerk_id: str    
     email: str
 
 class UserCreate(UserBase):
