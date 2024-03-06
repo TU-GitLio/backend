@@ -7,13 +7,14 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from .repository import user_repository
 
-from .model.models import Base
-from .config.mongo import client
+from .models import Base
 
 from . import schemas
-from .database import SessionLocal, engine
+from .database import engine, get_db
 
-Base.metadata.create_all(bind=engine)
+from .domain.project import project_router
+Base.metadata.create_all(bind=engine)   # FastAPI 실행시 필요한 테이블 모두 생성
+
 
 app = FastAPI(
     title="LangChain Server",
@@ -21,13 +22,6 @@ app = FastAPI(
     description="Spin up a simple api server using Langchain's Runnable interfaces",
 )
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 templates = Jinja2Templates(directory="templates")
 
@@ -55,6 +49,8 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = user_repository.get_users(db, skip=skip, limit=limit)
     return users
 
+
+app.include_router(project_router.router)
 
 add_routes(
     app,
