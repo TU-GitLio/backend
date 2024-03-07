@@ -2,7 +2,7 @@ import shutil
 import os
 from fastapi import FastAPI, Request, Depends, HTTPException, UploadFile, File, Response
 from fastapi.responses import RedirectResponse
-from langchain.chat_models import ChatAnthropic, ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langserve import add_routes
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -10,15 +10,16 @@ from sqlalchemy.orm import Session
 from .repository import user_repository
 from .service import user_service
 
-from .model.models import Base
+from .models import Base
 from .config.mongo import client
 import boto3
 
 from . import schemas
+from .database import engine, get_db
 
-from .database import SessionLocal, engine
+from .domain.project import project_router
+Base.metadata.create_all(bind=engine)   # FastAPI 실행시 필요한 테이블 모두 생성
 
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="LangChain Server",
@@ -26,13 +27,6 @@ app = FastAPI(
     description="Spin up a simple api server using Langchain's Runnable interfaces",
 )
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 templates = Jinja2Templates(directory="templates")
 
@@ -72,6 +66,11 @@ async def update_profile(response: Response, clerk_id: str, profile_picture: Upl
         return {"message": "Failed to upload profile picture"}
     return {"message": "Profile picture uploaded successfully"}
 
+<<<<<<< HEAD
+
+app.include_router(project_router.router)
+=======
+>>>>>>> develop
 
 add_routes(
     app,
