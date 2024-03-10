@@ -18,7 +18,6 @@ from . import schemas
 from .database import engine, get_db
 
 from .domain.project import project_router
-Base.metadata.create_all(bind=engine)   # FastAPI 실행시 필요한 테이블 모두 생성
 
 
 app = FastAPI(
@@ -66,11 +65,8 @@ async def update_profile(response: Response, clerk_id: str, profile_picture: Upl
         return {"message": "Failed to upload profile picture"}
     return {"message": "Profile picture uploaded successfully"}
 
-<<<<<<< HEAD
 
 app.include_router(project_router.router)
-=======
->>>>>>> develop
 
 add_routes(
     app,
