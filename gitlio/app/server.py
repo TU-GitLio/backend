@@ -18,6 +18,7 @@ from . import schemas
 from .database import engine, get_db
 
 from .domain.project import project_router
+Base.metadata.create_all(bind=engine)   # FastAPI 실행시 필요한 테이블 모두 생성
 
 
 app = FastAPI(
