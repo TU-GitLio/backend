@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import List
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, JSON
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, JSON, Text, DateTime
+from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
@@ -12,35 +13,41 @@ class Base(DeclarativeBase):
     pass
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = 'user'
+    user_id = Column('userId', Integer, primary_key=True)
+    clerk_id = Column('clerkId', String(255))
+    email = Column('email', String(255))
+    name = Column('name', String(255))
+    
+    # Establishing the relationship to Portfolio and Repository
+    portfolios = relationship("Portfolio", back_populates="user")
+    repositories = relationship("Repository", back_populates="user")
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    clerk_id = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    is_active = Column(Boolean, default=True)
-    portfolio: Mapped[List["Portfolio"]] = relationship(back_populates="user")
 
 class Portfolio(Base):
-    __tablename__ = "portfolios"
+    __tablename__ = 'portfolio'
+    portfolio_id = Column('portfolioId', Integer, primary_key=True)
+    user_id = Column('userId', Integer, ForeignKey('user.userId'))
+    title = Column('title', String(255))
+    mongo_id = Column('mongoId', String(255))
+    domain_name = Column('domainName', String(255))
+    deployed = Column('deployed', Boolean)
+    updated_at = Column('updatedAt', DateTime, onupdate=func.now())
+    created_at = Column('createdAt', DateTime, default=func.now())
+    
+    # Establishing the relationship to User
+    user = relationship("User", back_populates="portfolios")
 
-    id = Column(Integer, primary_key=True)
-    mongo_id = Column(String, index=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    owner = relationship("User", back_populates="portfolio")
-    project: Mapped[List["Project"]] = relationship(back_populates="portfolio")
 
-class Project(Base):
-    __tablename__ = "projects"
-
-    id = Column(Integer, primary_key=True)
-    repository_url = Column(String, index=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
-    duration = Column(String, index=True)
-    skill = Column(JSON, default=[])
-    gpt_data = Column(JSON, default=[]) # gpt 결과
-    document_url = Column(String, index=True) # 문서(블로그) url
-    portfolio_id: Mapped[int] = mapped_column(ForeignKey("portfolios.id"))
-    portfolio = relationship("Portfolio", back_populates="project")
+class Repository(Base):
+    __tablename__ = 'repository'
+    repository_id = Column('repositoryId', Integer, primary_key=True)
+    user_id = Column('userId', Integer, ForeignKey('user.userId'))
+    repository_url = Column('repositoryUrl', String(255))
+    main_image = Column('mainImage', String(255))
+    user_data = Column('userData', Text)  # Assuming 'text' should be translated to String
+    gpt_result = Column('gptResult', Text)  # Assuming 'text' should be translated to String
+    used_skills = Column('usedSkills', Text)
+    
+    # Establishing the relationship to User
+    user = relationship("User", back_populates="repositories")
