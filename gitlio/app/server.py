@@ -66,11 +66,8 @@ async def update_profile(response: Response, clerk_id: str, profile_picture: Upl
         return {"message": "Failed to upload profile picture"}
     return {"message": "Profile picture uploaded successfully"}
 
-<<<<<<< HEAD
 
 app.include_router(project_router.router)
-=======
->>>>>>> develop
 
 add_routes(
     app,
