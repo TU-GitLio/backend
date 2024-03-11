@@ -18,6 +18,7 @@ from . import schemas
 from .database import engine, get_db
 
 from .domain.project import project_router
+from .domain.user import user_router
 Base.metadata.create_all(bind=engine)   # FastAPI 실행시 필요한 테이블 모두 생성
 
 
@@ -40,20 +41,6 @@ async def read_item(request: Request, name: str):
         request=request, name="hello.html", context={"name": name}
 )
 
-@app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = user_repository.get_user_by_email(db, email=user.email)
-
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return user_repository.create_user(db=db, user=user)
-
-
-@app.get("/users/", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = user_repository.get_users(db, skip=skip, limit=limit)
-    return users
-
 @app.post("/profile/")
 async def update_profile(response: Response, clerk_id: str, profile_picture: UploadFile = File(...)):
     with open(f"{profile_picture.filename}", "wb") as buffer:
@@ -68,6 +55,7 @@ async def update_profile(response: Response, clerk_id: str, profile_picture: Upl
 
 
 app.include_router(project_router.router)
+app.include_router(user_router.router)
 
 add_routes(
     app,

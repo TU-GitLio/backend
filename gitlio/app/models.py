@@ -1,13 +1,10 @@
 from __future__ import annotations
 from typing import List
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, JSON, Text, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-
 
 class Base(DeclarativeBase):
     pass
@@ -15,7 +12,7 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = 'user'
     user_id = Column('userId', Integer, primary_key=True)
-    clerk_id = Column('clerkId', String(255))
+    clerk_id = Column('clerkId', String(255), unique=True, index=True)
     email = Column('email', String(255))
     name = Column('name', String(255))
     
