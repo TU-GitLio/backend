@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
 
 class User(Base):
     __tablename__ = 'user'
-    user_id = Column('userId', Integer, primary_key=True)
+    user_id = Column('userId', Integer, primary_key=True, index=True, autoincrement=True)
     clerk_id = Column('clerkId', String(255), unique=True, index=True)
     email = Column('email', String(255))
     name = Column('name', String(255))
@@ -23,7 +23,7 @@ class User(Base):
 
 class Portfolio(Base):
     __tablename__ = 'portfolio'
-    portfolio_id = Column('portfolioId', Integer, primary_key=True)
+    portfolio_id = Column('portfolioId', Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column('userId', Integer, ForeignKey('user.userId'))
     title = Column('title', String(255))
     mongo_id = Column('mongoId', String(255))
@@ -38,7 +38,7 @@ class Portfolio(Base):
 
 class Repository(Base):
     __tablename__ = 'repository'
-    repository_id = Column('repositoryId', Integer, primary_key=True)
+    repository_id = Column('repositoryId', Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column('userId', Integer, ForeignKey('user.userId'))
     repository_url = Column('repositoryUrl', String(255))
     main_image = Column('mainImage', String(255))
