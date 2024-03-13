@@ -15,6 +15,6 @@ class UserCreateResponse(BaseModel):
     name: str
     
 
-class UserPortfolio(BaseModel):
+class UserPortfolio(UserCreateResponse):
     portfolio: Optional[List[portfolio_schema.PortfolioModel]] = None
 
