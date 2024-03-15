@@ -13,7 +13,7 @@ def create_portfolio(db: Session, portfolio_data):
     mongo_id = result.inserted_id
 
     new_portfolio = Portfolio(
-        user_id=portfolio_data.userId,
+        user_id=portfolio_data.user_id,
         title=portfolio_data.title,
         domain_name=portfolio_data.domain_name,
         mongo_id=str(mongo_id),
