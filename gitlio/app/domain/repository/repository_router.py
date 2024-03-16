@@ -1,4 +1,5 @@
 import base64
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
@@ -50,7 +51,6 @@ def find_package_file(user: str, repo: str, path: str, target_files: list):
         items = response.json()
         for item in items:
             if item['type'] == 'file' and item['name'] in target_files:
-                print(f"이게 찐이다!!!", item['path'])
                 return item['path']
             elif item['type'] == 'dir':
                 # 하위 디렉토리를 재귀적으로 탐색
@@ -72,10 +72,27 @@ def get_package_contents(user: str, repo: str, path: str):
         contents = base64.b64decode(item['content']).decode('utf-8')
         return contents
     else:
-        raise HTTPException(status_code=response.status_code, detail=f"Failed to fetch {path}: {response.status_code}")
+        print(f"Failed to fetch {path}")
 
 
 # TODO: readme 이미지 반환
+def get_readme_images(user: str, repo: str):
+    readme_url = f"https://api.github.com/repos/{user}/{repo}/readme"
+    response = requests.get(readme_url, headers=headers)
+
+    if response.status_code == 200:
+        readme_data = response.json()
+        readme_content = readme_data['content']
+        readme_content_decoded = base64.b64decode(readme_content).decode('utf-8')
+        # HTML <img> 태그 내의 src 속성 값을 추출
+        image_urls = re.findall(r'<img [^>]*src="([^"]+)"', readme_content_decoded)
+
+        # https://github.com/ 시작하는 URL만 필터링
+        github_image_urls = [url for url in image_urls if url.startswith("https://github.com/")]
+        return github_image_urls
+    else:
+        return []
+
 
 # user-data 조회
 @router.post("/user-data", response_model=List[repository_schema.RepositoryUserData], status_code=201)
@@ -101,12 +118,15 @@ def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Sessio
         package_path = find_package_file(user, repo, "", package_files)
         package_contents = get_package_contents(user, repo, package_path)
 
+        # README 이미지
+        readme_images = get_readme_images(user, repo)
+
         # 매핑
         user_data = repository_schema.RepositoryUserData(
             repository_url=f"https://github.com/{user}/{repo}",
             commit_list=commit_messages,
             package_contents=package_contents,
-            readme_images=["이미지", "이미지2"]
+            readme_images=readme_images
         )
 
         repository_data = {
