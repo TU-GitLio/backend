@@ -6,7 +6,7 @@ def create_portfolio(db: Session, portfolio_data):
 
     mongo_document = {
         "title": portfolio_data.title,
-        "domain_name": portfolio_data.domainName,
+        "domain_name": portfolio_data.domain_name,
         "portfolio_data": None
     }
     result = portfolios_collection.insert_one(mongo_document)
@@ -15,7 +15,7 @@ def create_portfolio(db: Session, portfolio_data):
     new_portfolio = Portfolio(
         user_id=portfolio_data.userId,
         title=portfolio_data.title,
-        domain_name=portfolio_data.domainName,
+        domain_name=portfolio_data.domain_name,
         mongo_id=str(mongo_id),
         deployed=False,  # 초기 상태는 비배포로 설정
     )

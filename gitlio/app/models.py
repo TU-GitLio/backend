@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import DeclarativeBase
@@ -42,9 +42,8 @@ class Repository(Base):
     user_id = Column('userId', Integer, ForeignKey('user.userId'))
     repository_url = Column('repositoryUrl', String(255))
     main_image = Column('mainImage', String(255))
-    user_data = Column('userData', Text)  # Assuming 'text' should be translated to String
-    gpt_result = Column('gptResult', Text)  # Assuming 'text' should be translated to String
-    used_skills = Column('usedSkills', Text)
+    user_data = Column('userData', JSON)
+    gpt_result = Column('gptResult', JSON)
     
     # Establishing the relationship to User
     user = relationship("User", back_populates="repositories")

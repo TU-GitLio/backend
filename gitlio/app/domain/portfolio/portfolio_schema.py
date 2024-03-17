@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import Optional
 
 class PortfolioCreate(BaseModel):
-    userId: int
+    user_id: int
     title: str
-    domainName: str
+    domain_name: str
 
 # Portfolio 모델 정의
 class PortfolioModel(BaseModel):
