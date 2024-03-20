@@ -29,22 +29,38 @@ def repository_list(db: Session = Depends(get_db)):
     return _repository_list
 
 
-# 커밋 기록 반환
-def get_commit(user: str, repo: str):
-    commit_url = f"https://api.github.com/repos/{user}/{repo}/commits"
-    response = requests.get(commit_url, headers=headers)
+# GitHub Personal Access Token으로 username 반환
+def get_github_username():
+    response = requests.get("https://api.github.com/user", headers=headers)
 
     if response.status_code == 200:
-        commits = response.json()
-        commit_messages = [commit['commit']['message'] for commit in commits]
-        return commit_messages
+        user_data = response.json()
+        return user_data.get("login")  # GitHub 사용자 이름 반환
     else:
-        raise HTTPException(status_code=response.status_code, detail="Failed to fetch commits from GitHub API")
+        return None
 
+
+# 커밋 기록 반환
+def get_commit(org: str, repo: str, user: str):
+    commit_messages = []
+    page = 1
+    while True:
+        commit_url = f"https://api.github.com/repos/{org}/{repo}/commits?author={user}&page={page}&per_page=100"
+        response = requests.get(commit_url, headers=headers)
+
+        if response.status_code == 200:
+            commits = response.json()
+            if not commits:
+                break  # 더 이상 가져올 커밋이 없으면 반복 종료
+            commit_messages.extend([commit['commit']['message'] for commit in commits])
+            page += 1
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Failed to fetch commits from GitHub API")
+    return commit_messages
 
 # 패키지 파일 찾기
-def find_package_file(user: str, repo: str, path: str, target_files: list):
-    package_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
+def find_package_file(org: str, repo: str, path: str, target_files: list):
+    package_url = f"https://api.github.com/repos/{org}/{repo}/contents/{path}"
     response = requests.get(package_url, headers=headers)
 
     if response.status_code == 200:
@@ -54,7 +70,7 @@ def find_package_file(user: str, repo: str, path: str, target_files: list):
                 return item['path']
             elif item['type'] == 'dir':
                 # 하위 디렉토리를 재귀적으로 탐색
-                found_path = find_package_file(user, repo, item['path'], target_files)
+                found_path = find_package_file(org, repo, item['path'], target_files)
                 if found_path:
                     return found_path
     elif response.status_code == 404:
@@ -62,8 +78,8 @@ def find_package_file(user: str, repo: str, path: str, target_files: list):
 
 
 # 패키지 파일 내용 반환
-def get_package_contents(user: str, repo: str, path: str):
-    package_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}"
+def get_package_contents(org: str, repo: str, path: str):
+    package_url = f"https://api.github.com/repos/{org}/{repo}/contents/{path}"
     print(package_url)
     response = requests.get(package_url, headers=headers)
 
@@ -75,9 +91,9 @@ def get_package_contents(user: str, repo: str, path: str):
         print(f"Failed to fetch {path}")
 
 
-# TODO: readme 이미지 반환
-def get_readme_images(user: str, repo: str):
-    readme_url = f"https://api.github.com/repos/{user}/{repo}/readme"
+# org의 Overview readme 이미지 반환
+def get_readme_images(org: str):
+    readme_url = f"https://api.github.com/repos/{org}/.github/contents/profile/README.md"
     response = requests.get(readme_url, headers=headers)
 
     if response.status_code == 200:
@@ -108,22 +124,25 @@ def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Sessio
         if len(path_segments) != 2:
             raise HTTPException(status_code=400, detail="Invalid GitHub repository URL")
 
-        user, repo = path_segments
+        org, repo = path_segments
+
+        # username
+        username = get_github_username()
 
         # 커밋 기록
-        commit_messages = get_commit(user, repo)
+        commit_messages = get_commit(org, repo, username)
 
         # 패키지 파일 내용
         package_files = ['requirements.txt', 'Pipfile', 'setup.py', 'build.gradle', 'pom.xml', 'package.json']
-        package_path = find_package_file(user, repo, "", package_files)
-        package_contents = get_package_contents(user, repo, package_path)
+        package_path = find_package_file(org, repo, "", package_files)
+        package_contents = get_package_contents(org, repo, package_path)
 
         # README 이미지
-        readme_images = get_readme_images(user, repo)
+        readme_images = get_readme_images(org)
 
         # 매핑
         user_data = repository_schema.RepositoryUserData(
-            repository_url=f"https://github.com/{user}/{repo}",
+            repository_url=f"https://github.com/{org}/{repo}",
             commit_list=commit_messages,
             package_contents=package_contents,
             readme_images=readme_images
