@@ -29,23 +29,12 @@ def repository_list(db: Session = Depends(get_db)):
     return _repository_list
 
 
-# GitHub Personal Access Token으로 username 반환
-def get_github_username():
-    response = requests.get("https://api.github.com/user", headers=headers)
-
-    if response.status_code == 200:
-        user_data = response.json()
-        return user_data.get("login")  # GitHub 사용자 이름 반환
-    else:
-        return None
-
-
 # 커밋 기록 반환
-def get_commit(org: str, repo: str, user: str):
+def get_commit(org: str, repo: str, username: str):
     commit_messages = []
     page = 1
     while True:
-        commit_url = f"https://api.github.com/repos/{org}/{repo}/commits?author={user}&page={page}&per_page=100"
+        commit_url = f"https://api.github.com/repos/{org}/{repo}/commits?author={username}&page={page}&per_page=100"
         response = requests.get(commit_url, headers=headers)
 
         if response.status_code == 200:
@@ -57,6 +46,7 @@ def get_commit(org: str, repo: str, user: str):
         else:
             raise HTTPException(status_code=response.status_code, detail="Failed to fetch commits from GitHub API")
     return commit_messages
+
 
 # 패키지 파일 찾기
 def find_package_file(org: str, repo: str, path: str, target_files: list):
@@ -92,6 +82,7 @@ def get_package_contents(org: str, repo: str, path: str):
 
 
 # org의 Overview readme 이미지 반환
+# TODO: 로직 수정하기
 def get_readme_images(org: str):
     readme_url = f"https://api.github.com/repos/{org}/.github/contents/profile/README.md"
     response = requests.get(readme_url, headers=headers)
@@ -125,9 +116,7 @@ def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Sessio
             raise HTTPException(status_code=400, detail="Invalid GitHub repository URL")
 
         org, repo = path_segments
-
-        # username
-        username = get_github_username()
+        username = request.github_username
 
         # 커밋 기록
         commit_messages = get_commit(org, repo, username)

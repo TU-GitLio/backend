@@ -19,6 +19,7 @@ class RepositoryGPT(BaseModel):
 
 class RepositoryCreateRequest(BaseModel):
     user_id: int
+    github_username: str
     repository_url: List[str] = []
 
 
