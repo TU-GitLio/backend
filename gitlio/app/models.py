@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, JSON
 from sqlalchemy.sql import func

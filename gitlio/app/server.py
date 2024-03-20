@@ -13,7 +13,7 @@ from .config.mongo import client
 
 from .database import engine
 
-from .domain.project import project_router
+from .domain.repository import repository_router
 from .domain.user import user_router
 from .domain.portfolio import portfolio_router
 Base.metadata.create_all(bind=engine)   # FastAPI 실행시 필요한 테이블 모두 생성
@@ -51,7 +51,7 @@ async def update_profile(response: Response, clerk_id: str, profile_picture: Upl
     return {"message": "Profile picture uploaded successfully"}
 
 
-app.include_router(project_router.router)
+app.include_router(repository_router.router)
 app.include_router(user_router.router)
 app.include_router(portfolio_router.router)
 
