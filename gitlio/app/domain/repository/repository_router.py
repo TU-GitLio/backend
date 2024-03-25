@@ -11,15 +11,19 @@ from ...database import get_db
 import requests
 from typing import List
 from urllib.parse import urlparse
+from dotenv import load_dotenv, find_dotenv
+import os
+
+load_dotenv(find_dotenv())
 
 router = APIRouter(
     prefix="/api/repositories"
 )
 
 # GitHub Personal Access Token
-token = '토큰'
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 headers = {
-    'Authorization': f'token {token}',
+    'Authorization': f'Bearer {GITHUB_TOKEN}',
 }
 
 
@@ -122,7 +126,7 @@ def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Sessio
         commit_messages = get_commit(org, repo, username)
 
         # 패키지 파일 내용
-        package_files = ['requirements.txt', 'Pipfile', 'setup.py', 'build.gradle', 'pom.xml', 'package.json']
+        package_files = ['requirements.txt', 'Pipfile', 'setup.py', 'build.gradle', 'pom.xml', 'package.json', 'go.mod']
         package_path = find_package_file(org, repo, "", package_files)
         package_contents = get_package_contents(org, repo, package_path)
 
