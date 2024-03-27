@@ -3,7 +3,6 @@ import re
 
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -116,19 +115,18 @@ def get_readme_images(org: str, repo: str):
                 return filtered_image_urls
         else:
             print(f"Failed to fetch README from {url}")
-    # 해당하는 이미지 URL을 찾지 못했거나, 요청이 실패한 경우 빈 리스트 반환
     return []
 
 
 # user-data 조회
 @router.post("/user-data", response_model=List[repository_schema.RepositoryUserData], status_code=201)
 def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Session = Depends(get_db)) -> JSONResponse:
-    created_repositories = []
+    projects = {}
     for repo_url in request.repository_url:
         if not repo_url:
             raise HTTPException(status_code=400, detail="Repository URL is required")
 
-        # GitHub repository URL 파싱 TODO: repo_url을 패키지 파일이 있는 최상위 디렉토리 url로 할 수 있는지 확인
+        # GitHub repository URL 파싱
         parsed_url = urlparse(repo_url)
         path_segments = parsed_url.path.strip("/").split("/")
         if len(path_segments) != 2:
@@ -164,14 +162,16 @@ def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Sessio
             "gpt_result": []
         }
         db_repository = repository_crud.create_repository(db, repository_data)
-        created_repositories.append(user_data)
 
         if not db_repository:
             raise HTTPException(status_code=500, detail="Failed to save repository")
 
-    user_data_json = jsonable_encoder(created_repositories)
+        if org not in projects:
+            projects[org] = []
+
+        projects[org].append(user_data.dict())
 
     return JSONResponse(content={
-        "message": "레포지토리 저장 성공",
-        "data": user_data_json
+        "message": "repository 저장 성공",
+        "data": projects
     }, status_code=200)
