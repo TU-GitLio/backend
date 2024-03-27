@@ -3,6 +3,7 @@ import re
 
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -121,57 +122,72 @@ def get_readme_images(org: str, repo: str):
 # user-data 조회
 @router.post("/user-data", response_model=List[repository_schema.RepositoryUserData], status_code=201)
 def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Session = Depends(get_db)) -> JSONResponse:
-    projects = {}
+    org_repositories = {}
+    personal_repositories = []
+    errors = []
     for repo_url in request.repository_url:
-        if not repo_url:
-            raise HTTPException(status_code=400, detail="Repository URL is required")
-
         # GitHub repository URL 파싱
         parsed_url = urlparse(repo_url)
         path_segments = parsed_url.path.strip("/").split("/")
-        if len(path_segments) != 2:
-            raise HTTPException(status_code=400, detail="Invalid GitHub repository URL")
+        if len(path_segments) < 2 or not repo_url:
+            errors.append({"url": repo_url, "message": "Invalid or empty GitHub repository URL"})
+            continue
 
         org, repo = path_segments
         username = request.github_username
+        try:
+            # 커밋 기록
+            commit_messages = get_commit(org, repo, username)
 
-        # 커밋 기록
-        commit_messages = get_commit(org, repo, username)
+            # 패키지 파일 내용
+            package_files = ['requirements.txt', 'Pipfile', 'setup.py', 'build.gradle', 'pom.xml', 'package.json', 'go.mod']
+            package_path = find_package_file(org, repo, "", package_files)
+            package_contents = get_package_contents(org, repo, package_path)
 
-        # 패키지 파일 내용
-        package_files = ['requirements.txt', 'Pipfile', 'setup.py', 'build.gradle', 'pom.xml', 'package.json', 'go.mod']
-        package_path = find_package_file(org, repo, "", package_files)
-        package_contents = get_package_contents(org, repo, package_path)
+            # README 이미지
+            readme_images = get_readme_images(org, repo)
 
-        # README 이미지
-        readme_images = get_readme_images(org, repo)
+            # 매핑
+            user_data = repository_schema.RepositoryUserData(
+                repository_url=f"https://github.com/{org}/{repo}",
+                commit_list=commit_messages,
+                package_contents=package_contents,
+                readme_images=readme_images
+            )
 
-        # 매핑
-        user_data = repository_schema.RepositoryUserData(
-            repository_url=f"https://github.com/{org}/{repo}",
-            commit_list=commit_messages,
-            package_contents=package_contents,
-            readme_images=readme_images
-        )
+            repository_data = {
+                "user_id": request.user_id,
+                "repository_url": repo_url,
+                "main_image": "default_image.png",
+                "user_data": user_data.dict(),
+                "gpt_result": []
+            }
+            db_repository = repository_crud.create_repository(db, repository_data)
 
-        repository_data = {
-            "user_id": request.user_id,
-            "repository_url": repo_url,
-            "main_image": "default_image.png",
-            "user_data": user_data.dict(),
-            "gpt_result": []
-        }
-        db_repository = repository_crud.create_repository(db, repository_data)
+            if not db_repository:
+                raise HTTPException(status_code=500, detail="Failed to save repository")
 
-        if not db_repository:
-            raise HTTPException(status_code=500, detail="Failed to save repository")
+            # org 명으로 프로젝트 구분
+            if org == username:
+                # 개인 프로젝트로 처리
+                personal_repositories.append(user_data)
+            else:
+                if org not in org_repositories:
+                    org_repositories[org] = []
+                org_repositories[org].append(user_data)
 
-        if org not in projects:
-            projects[org] = []
+        except Exception as e:
+            errors.append({"url": repo_url, "message": str(e)})
 
-        projects[org].append(user_data.dict())
+    results = {
+        "success": {
+            "organizations": jsonable_encoder(org_repositories),
+            "personal": jsonable_encoder(personal_repositories)
+        },
+        "errors": errors
+    }
 
     return JSONResponse(content={
         "message": "repository 저장 성공",
-        "data": projects
-    }, status_code=200)
+        "data": results
+    }, status_code=201)
