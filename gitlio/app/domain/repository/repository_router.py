@@ -1,6 +1,7 @@
 import base64
 import re
 
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -85,24 +86,38 @@ def get_package_contents(org: str, repo: str, path: str):
         print(f"Failed to fetch {path}")
 
 
-# org의 Overview readme 이미지 반환
-# TODO: 로직 수정하기
-def get_readme_images(org: str):
-    readme_url = f"https://api.github.com/repos/{org}/.github/contents/profile/README.md"
-    response = requests.get(readme_url, headers=headers)
+# readme 이미지 반환
+def get_readme_images(org: str, repo: str):
+    urls = [
+        f"https://api.github.com/repos/{org}/.github/contents/profile/README.md",
+        f"https://api.github.com/repos/{org}/{repo}/readme"
+    ]
 
-    if response.status_code == 200:
-        readme_data = response.json()
-        readme_content = readme_data['content']
-        readme_content_decoded = base64.b64decode(readme_content).decode('utf-8')
-        # HTML <img> 태그 내의 src 속성 값을 추출
-        image_urls = re.findall(r'<img [^>]*src="([^"]+)"', readme_content_decoded)
+    for url in urls:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            readme_data = response.json()
+            readme_content_encoded = readme_data['content']
+            readme_content_decoded = base64.b64decode(readme_content_encoded).decode('utf-8')
 
-        # https://github.com/ 시작하는 URL만 필터링
-        github_image_urls = [url for url in image_urls if url.startswith("https://github.com/")]
-        return github_image_urls
-    else:
-        return []
+            # 마크다운 이미지 링크 추출
+            markdown_image_urls = re.findall(r'!\[.*?\]\((.*?)\)', readme_content_decoded)
+
+            # HTML 이미지 링크 추출
+            soup = BeautifulSoup(readme_content_decoded, 'html.parser')
+            html_image_urls = [img['src'] for img in soup.find_all('img')]
+
+            image_urls = markdown_image_urls + html_image_urls
+
+            filtered_image_urls = [url for url in image_urls if
+                                   "github.com/" in url or "githubusercontent.com/" in url]
+
+            if filtered_image_urls:
+                return filtered_image_urls
+        else:
+            print(f"Failed to fetch README from {url}")
+    # 해당하는 이미지 URL을 찾지 못했거나, 요청이 실패한 경우 빈 리스트 반환
+    return []
 
 
 # user-data 조회
@@ -131,7 +146,7 @@ def get_user_data(request: repository_schema.RepositoryCreateRequest, db: Sessio
         package_contents = get_package_contents(org, repo, package_path)
 
         # README 이미지
-        readme_images = get_readme_images(org)
+        readme_images = get_readme_images(org, repo)
 
         # 매핑
         user_data = repository_schema.RepositoryUserData(
